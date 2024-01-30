@@ -96,7 +96,7 @@ class App
 
     private function getStatsForShortCode($shortCode) {
         $query = $this->db->query(
-            'SELECT url, short_code, hits, created_at FROM urls WHERE short_code = ?',
+            'SELECT url, short_code, hits, created_at, last_accessed FROM urls WHERE short_code = ?',
             $shortCode
         );
     
@@ -108,6 +108,7 @@ class App
                 'short_code' => $stats->short_code,
                 'hit_counter' => $stats->hits,
                 'created_at' => $stats->created_at,
+                'last_accessed' => $stats->last_accessed
             ];
     
             return $formattedStats;

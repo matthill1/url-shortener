@@ -117,8 +117,13 @@ class App
 
     private function incrementHitCounter($shortCode)
     {
+        $currentDateTime = new \DateTime();
+
         $query = $this->db->query(
-            'UPDATE urls SET hits = hits + 1 WHERE short_code = ?',
+            'UPDATE urls SET hits = hits + 1,
+             last_accessed = ?
+             WHERE short_code = ?',
+            $currentDateTime->format('Y-m-d H:i:s'),
             $shortCode
         );
     }

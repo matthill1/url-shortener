@@ -56,25 +56,41 @@ class App
         }
     }
 
+    // A bit rough and ready
+    private function isValidURL($url) {
+        $pattern = '/^(https?:\/\/)?(www\.)?[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+(\/[a-zA-Z0-9-._~%]*)*$/';
+        return preg_match($pattern, $url) === 1;
+    }
 
 
     private function shortenUrl($url): Response {
     
-        /* Add some validation here -- both if the URL already exists +
-            if (!$this->isValidURL($url)) {
-                return $this->response('Invalid URL', 400);
-            }
-        */
+        if (!$this->isValidURL($url)) {
+            return $this->response('Invalid URL', 400);
+        }
+
+        $existingUrl = $this->db->query('SELECT * FROM urls WHERE url = ?', $url)->fetch();
+
+        if($existingUrl){
+            $this->db->query(
+                'UPDATE urls SET hits = hits + 1 WHERE url = ?',
+                $url
+            );
+
+            return $this->response($existingUrl->short_code, 200);
+        }
+
 
         $shortCode = substr(md5(time() . $url), 0, 6);
         $currentDateTime = new \DateTime();
 
         $query = $this->db->query(
-            'INSERT INTO urls (url, short_code, created_at) 
-            VALUES (?, ?, ?)', 
+            'INSERT INTO urls (url, short_code, created_at, hits) 
+            VALUES (?, ?, ?, ?)',
             $url, 
             $shortCode, 
-            $currentDateTime->format('Y-m-d H:i:s')
+            $currentDateTime->format('Y-m-d H:i:s'),
+            1
         );
 
         if ($query) {

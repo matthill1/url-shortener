@@ -30,32 +30,6 @@ class App
         );
     }
 
-    public function test()
-    {
-        $this->migrate();
-        $result = $this->db->query('SELECT * FROM urls');
-        $output = [];
-    
-        foreach ($result as $row) {
-            $output[] = ['id' => $row->id, 'name' => $row->name];
-        }
-        
-        return json_encode($output);
-    }
-
-    public function checkTables()
-    {
-        $this->migrate();
-
-        $tables = $this->db->query('SHOW TABLES')->fetchAll();
-
-        if (count($tables) > 0) {
-            return $this->response('Tables exist in the database.', 200);
-        } else {
-            return $this->response('No tables found in the database.', 404);
-        }
-    }
-
     // A bit rough and ready
     private function isValidURL($url) {
         $pattern = '/^(https?:\/\/)?(www\.)?[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+(\/[a-zA-Z0-9-._~%]*)*$/';
@@ -174,8 +148,7 @@ class App
         switch ($action) {
 
             case "test":
-                $testResult = $this->test();
-                return $this->response($testResult, 200);
+                return $this->response("Test", 200);
 
             case "shorten":
                 return $this->shortenUrl($url);
@@ -193,10 +166,6 @@ class App
                 }
             
                 return $this->response(json_encode($stats), 200);
-
-            case "check-tables":
-                // Check if any tables exist in the database
-                return $this->checkTables();
 
             default:
                 return $this->handleShortURL($shortCode);

@@ -14,6 +14,7 @@ services:
     # MySQL database service
     db:
         image: mysql:5.7
+        platform: linux/amd64
         container_name: mysql-db
         ports:
             - "3306:3306"
@@ -30,6 +31,7 @@ services:
     # Nginx service
     nginx:
         image: nginx:alpine
+        platform: linux/amd64
         container_name: php-nginx
         ports:
             - 8000:80

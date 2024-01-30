@@ -142,10 +142,10 @@ class App
         $segments = explode('/', $pathInfo, 3);
 
         $action = isset($segments[1]) ? $segments[1] : '';
-        $url = isset($segments[2]) ? $segments[2] : '';
 
         $queryString = $request->getQueryString();
         $shortCode = $request->query->get('short_code');
+        $url =  $request->query->get('url');
 
         switch ($action) {
 

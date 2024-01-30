@@ -39,7 +39,7 @@ class App
 
     private function shortenUrl($url): Response {
     
-        if (!$this->isValidURL($url)) {
+        if (!$url || !$this->isValidURL($url)) {
             return $this->response('Invalid URL', 400);
         }
 
@@ -51,7 +51,7 @@ class App
                 $url
             );
 
-            return $this->response($existingUrl->short_code, 200);
+            return $this->response(json_encode(['short_code' =>$existingUrl->short_code]), 200);
         }
 
 
@@ -68,7 +68,7 @@ class App
         );
 
         if ($query) {
-            return $this->response($shortCode, 200);
+            return $this->response(json_encode(['short_code' =>$shortCode]), 200);
         } else {
             return $this->response('Error inserting data', 500);
         }
@@ -175,10 +175,12 @@ class App
                 return $this->response(json_encode($stats), 200);
 
             default:
+                if(!$shortCode){
+                    return $this->response('Error: Query string is missing. Please provide a short code.', 400);
+                }
                 return $this->handleShortURL($shortCode);
         }
 
-        return $this->response(content: 'Default message...');
     }
 
     private function response(string $content, int $status = 200, string $type =  'text/html'): Response

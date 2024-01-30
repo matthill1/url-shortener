@@ -96,7 +96,6 @@ class App
         if ($query) {
             return $this->response($shortCode, 200);
         } else {
-            // Handle the error if the query fails
             return $this->response('Error inserting data', 500);
         }
 
@@ -118,7 +117,6 @@ class App
                 return $this->response($testResult, 200);
 
             case "shorten":
-                // Store a url in the database and return a shortened url...
                 return $this->shortenUrl($url);
             case "stats":
                 // Get stats about a given url and return a response...

@@ -56,9 +56,44 @@ class App
         }
     }
 
+
+
+    private function shortenUrl($url): Response {
+    
+        /* Add some validation here -- both if the URL already exists +
+            if (!$this->isValidURL($url)) {
+                return $this->response('Invalid URL', 400);
+            }
+        */
+
+        $shortCode = substr(md5(time() . $url), 0, 6);
+        $currentDateTime = new \DateTime();
+
+        $query = $this->db->query(
+            'INSERT INTO urls (url, short_code, created_at) 
+            VALUES (?, ?, ?)', 
+            $url, 
+            $shortCode, 
+            $currentDateTime->format('Y-m-d H:i:s')
+        );
+
+        if ($query) {
+            return $this->response($shortCode, 200);
+        } else {
+            // Handle the error if the query fails
+            return $this->response('Error inserting data', 500);
+        }
+
+        return $this->response($shortCode, 200);
+    }
+
     public function handle(Request $request): Response
     {   
-        $action = str_replace('/', '', $request->getPathInfo());
+        $pathInfo = $request->getPathInfo();
+        $segments = explode('/', $pathInfo, 3);
+
+        $action = isset($segments[1]) ? $segments[1] : '';
+        $url = isset($segments[2]) ? $segments[2] : '';
 
         switch ($action) {
 
@@ -68,7 +103,7 @@ class App
 
             case "shorten":
                 // Store a url in the database and return a shortened url...
-
+                return $this->shortenUrl($url);
             case "stats":
                 // Get stats about a given url and return a response...
 

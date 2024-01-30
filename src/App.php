@@ -37,23 +37,44 @@ class App
     }
 
 
-    private function shortenUrl($url): Response {
+    private function handleShortenUrl($url): Response {
     
         if (!$url || !$this->isValidURL($url)) {
             return $this->response('Invalid URL', 400);
         }
 
-        $existingUrl = $this->db->query('SELECT * FROM urls WHERE url = ?', $url)->fetch();
+        $urlHasBeenShortened = $this->checkIfShortCodeExists($url);
 
-        if($existingUrl){
+        if($urlHasBeenShortened){
+            return $this->response(json_encode(['short_code' => $urlHasBeenShortened]), 200);
+        }
+
+        $generatedShortCode = $this->generateAndSaveShortCode($url);
+
+        if ($generatedShortCode) {
+            return $this->response(json_encode(['short_code' =>$generatedShortCode]), 200);
+        } else {
+            return $this->response('Error inserting data', 500);
+        }
+        return $this->response($generatedShortCode, 200);
+    }
+
+    private function checkIfShortCodeExists($url){
+
+        $urlAlreadyExists = $this->db->query('SELECT * FROM urls WHERE url = ?', $url)->fetch();
+
+        if($urlAlreadyExists){
             $this->db->query(
                 'UPDATE urls SET hits = hits + 1 WHERE url = ?',
                 $url
             );
 
-            return $this->response(json_encode(['short_code' =>$existingUrl->short_code]), 200);
+            return $urlAlreadyExists->short_code;
         }
+        return false;
+    }
 
+    private function generateAndSaveShortCode($url){
 
         $shortCode = substr(md5(time() . $url), 0, 6);
         $currentDateTime = new \DateTime();
@@ -67,13 +88,10 @@ class App
             1
         );
 
-        if ($query) {
-            return $this->response(json_encode(['short_code' =>$shortCode]), 200);
-        } else {
-            return $this->response('Error inserting data', 500);
+        if(!$query){
+            return false;
         }
-
-        return $this->response($shortCode, 200);
+        return $shortCode;
     }
 
     private function getStatsForShortCode($shortCode) {
@@ -114,6 +132,19 @@ class App
         }
     }
 
+    private function handleStats($shortCode): Response{
+        if (!$shortCode) {
+            return $this->response('Short code not provided', 400);
+        }
+
+        $stats = $this->getStatsForShortCode($shortCode);
+
+        if ($stats === null) {
+            return $this->response('Short code not found', 404);
+        }
+    
+        return $this->response(json_encode($stats), 200);
+    }
 
     private function incrementHitCounter($shortCode)
     {
@@ -128,7 +159,12 @@ class App
         );
     }
 
-    private function handleShortURL($shortCode) {
+    private function handleBaseRequest($shortCode) {
+
+        if(!$shortCode){
+            return $this->response('Error: Query string is missing. Please provide a short code.', 400);
+        }
+
         $originalURL = $this->getOriginalURLForShortCode($shortCode);
     
         if ($originalURL !== null) {
@@ -150,7 +186,7 @@ class App
 
         $queryString = $request->getQueryString();
         $shortCode = $request->query->get('short_code');
-        $url =  $request->query->get('url');
+        $url = $request->query->get('url');
 
         switch ($action) {
 
@@ -158,27 +194,13 @@ class App
                 return $this->response("Test", 200);
 
             case "shorten":
-                return $this->shortenUrl($url);
+                return $this->handleShortenUrl($url);
 
             case "stats":
-
-                if (!$shortCode) {
-                    return $this->response('Short code not provided', 400);
-                }
-
-                $stats = $this->getStatsForShortCode($shortCode);
-    
-                if ($stats === null) {
-                    return $this->response('Short code not found', 404);
-                }
-            
-                return $this->response(json_encode($stats), 200);
+                return $this->handleStats($shortCode);
 
             default:
-                if(!$shortCode){
-                    return $this->response('Error: Query string is missing. Please provide a short code.', 400);
-                }
-                return $this->handleShortURL($shortCode);
+                return $this->handleBaseRequest($shortCode);
         }
 
     }

@@ -1,94 +1,22 @@
 # Url Shortener
 
-The brief is to build a very simple url shortening service, similar to something like bit.ly or goo.gl.
+Various changes were made to make this run;
 
-The purpose of this assessment is to see how you approach a problem, and to assess your technical ability in object oriented php as well as your understanding of the http protocol. 
+1 - The docker-compose file was changed to include 
+    platform: linux/amd64
 
-Your solution should be built using PHP with a MySQL database.
+    This was required to get it to run on Apple MacBook Pro M1 Max.
 
-You may use php packages via composer, however we have provided a scaffold package which you can use if you wish.
+    See git SHA 2aedc647ff0f6ae5ab5349565c119d8158b6d45a
 
-The scaffold package uses [Nette Database](https://doc.nette.org/en/database) for database abstraction, and [Symfony HTTP Foundation](https://symfony.com/doc/current/components/http_foundation.html) to manage requests and responses in a nice object-oriented way.
+2 - The included migrate function apparently caused problems due to a COLLATE statement which seemingly didn't match the MySQL Version. See git SHA e12c22eab6d5d75a2287db1f27a4f527c5cfb41d
 
-## Requirements
+# Tests
 
-### 1 - Create a short code from a url
-A user must be able to get a short code from a url. Ideally, there should be checks in place to ensure a given url is valid and resolves.
+tests can be ran from;
 
-Request:
-```
-GET /shorten?url=google.com HTTP/1.1
-```
+vendor/bin/phpunit ./tests/ServerTests.php
 
-Response:
-```
-Host: localhost:8000
-Response:
-HTTP/1.1 200 OK
-Content-Type: text/plain
-http://localhost:8000/a7F15gaw
-```
-
-### 2 - Get a url from a short code
-
-A user must be able to be get a long url from a given short code. Each time a short code is requested, the hit counter for that url should be updated.
-
-Request:
-```
-GET /a7F15gaw
-```
-```
-HTTP/1.1
-Host: localhost:8000
-Response:
-HTTP/1.1 302 Found
-Location: http://google.com
-```
-### 3 - Get stats about a shortcode
-
-Request:
-```
-GET /stats?short_code=a7F15gaw
-```
-Response:
-
-```
-HTTP/1.1
-Host: localhost:8000
-Response:
-HTTP/1.1 200 OK
-Content-Type: text/plain
-Hits: 1
-Last accessed: 2024-01-24 12:51:02
-```
-
-## Getting started
-
-These steps are only applicable if you choose to use the provided scaffold application.
-
-1. Copy the .env.example file `cp .env.example .env`
-2. Install composer dependencies
-3. Build docker (see below)
-4. Run the db seeder, if using docker: `docker exec php-app php migrate.php`
-
-### Building Docker 
-
-Run `docker-compose build app` to build the app image.
-
-Run `docker-compose up -d` to start the server
-
-If you are running this demo on your local machine, use http://localhost:8000 to access the application from your browser.
-
-## Submission
-
-Either commit your work to (public) github repo and provide us with a url, or if you prefer, you can zip up your solution and email it to us.
-
-### Bonus - Running Tests
-
-To run tests you can either run them locally, or use docker.
-
-`./vendor/bin/phpunit tests`
-
-or 
-
-`docker exec php-app ./vendor/bin/phpunit tests`
+Unfortunately this is not fully inclusive of functionality. 
+This test file is missing re-direct tests due to unfamiliarity with the library, and time constraints.
+Manual re-direct tests performed with cURL appear successful.

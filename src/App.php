@@ -102,6 +102,64 @@ class App
         return $this->response($shortCode, 200);
     }
 
+    private function getStatsForShortCode($shortCode) {
+        $query = $this->db->query(
+            'SELECT url, short_code, hits, created_at FROM urls WHERE short_code = ?',
+            $shortCode
+        );
+    
+        $stats = $query->fetch();
+    
+        if ($stats !== false && $stats !== null) {
+            $formattedStats = [
+                'url' => $stats->url,
+                'short_code' => $stats->short_code,
+                'hit_counter' => $stats->hits,
+                'created_at' => $stats->created_at,
+            ];
+    
+            return $formattedStats;
+        } else {
+            return null;
+        }
+    }
+
+    private function getOriginalURLForShortCode($shortCode)
+    {
+        $query = $this->db->query(
+            'SELECT url FROM urls WHERE short_code = ?',
+            $shortCode
+        );
+
+        $result = $query->fetch();
+
+        if ($result !== false && $result !== null) {
+            return $result->url;
+        } else {
+            return null;
+        }
+    }
+
+
+    private function incrementHitCounter($shortCode)
+    {
+        $query = $this->db->query(
+            'UPDATE urls SET hits = hits + 1 WHERE short_code = ?',
+            $shortCode
+        );
+    }
+
+    private function handleShortURL($shortCode) {
+        $originalURL = $this->getOriginalURLForShortCode($shortCode);
+    
+        if ($originalURL !== null) { //Need to debug this. Probably need to setup redirects to external sites to work
+            $this->incrementHitCounter($shortCode);
+            return new RedirectResponse('/another-page');
+        } else {
+            return $this->response('Short URL not found', 404);
+        }
+    }
+
     public function handle(Request $request): Response
     {   
         $pathInfo = $request->getPathInfo();
@@ -109,6 +167,9 @@ class App
 
         $action = isset($segments[1]) ? $segments[1] : '';
         $url = isset($segments[2]) ? $segments[2] : '';
+
+        $queryString = $request->getQueryString();
+        $shortCode = $request->query->get('short_code');
 
         switch ($action) {
 
@@ -118,15 +179,27 @@ class App
 
             case "shorten":
                 return $this->shortenUrl($url);
+
             case "stats":
-                // Get stats about a given url and return a response...
+
+                if (!$shortCode) {
+                    return $this->response('Short code not provided', 400);
+                }
+
+                $stats = $this->getStatsForShortCode($shortCode);
+    
+                if ($stats === null) {
+                    return $this->response('Short code not found', 404);
+                }
+            
+                return $this->response(json_encode($stats), 200);
 
             case "check-tables":
                 // Check if any tables exist in the database
                 return $this->checkTables();
 
             default:
-                // Fetch a short url, update the hit counter, and return appropriate response (e.g. a Redirect or 404 Not Found)
+                return $this->handleShortURL($shortCode);
         }
 
         return $this->response(content: 'Default message...');

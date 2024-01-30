@@ -23,11 +23,35 @@ class App
                 `url` varchar(1024) DEFAULT '',
                 `short_code` varchar(1024) DEFAULT NULL,
                 `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                `last_accessed` timestamp,
+                `last_accessed` timestamp NULL DEFAULT NULL,
                 `hits` int NOT NULL DEFAULT '0',
             PRIMARY KEY (`id`)
             ) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;"
         );
+    }
+
+    public function test()
+    {
+        $this->migrate();
+        $result = $this->db->query('SELECT * FROM urls');
+        $output = [];
+    
+        foreach ($result as $row) {
+            $output[] = ['id' => $row->id, 'name' => $row->name];
+        }
+        
+        return json_encode($output);
+    }
+
+    public function checkTables()
+    {
+        $tables = $this->db->query('SHOW TABLES')->fetchAll();
+
+        if (count($tables) > 0) {
+            return $this->response('Tables exist in the database.', 200);
+        } else {
+            return $this->response('No tables found in the database.', 404);
+        }
     }
 
     public function handle(Request $request): Response
@@ -37,13 +61,18 @@ class App
         switch ($action) {
 
             case "test":
-                return $this->response("Test", 200);
+                $testResult = $this->test();
+                return $this->response($testResult, 200);
 
             case "shorten":
                 // Store a url in the database and return a shortened url...
 
             case "stats":
                 // Get stats about a given url and return a response...
+
+            case "check-tables":
+                // Check if any tables exist in the database
+                return $this->checkTables();
 
             default:
                 // Fetch a short url, update the hit counter, and return appropriate response (e.g. a Redirect or 404 Not Found)

@@ -126,9 +126,11 @@ class App
     private function handleShortURL($shortCode) {
         $originalURL = $this->getOriginalURLForShortCode($shortCode);
     
-        if ($originalURL !== null) { //Need to debug this. Probably need to setup redirects to external sites to work
+        if ($originalURL !== null) {
             $this->incrementHitCounter($shortCode);
-            return new RedirectResponse('/another-page');
+            $response = new RedirectResponse($originalURL, 301);
+            $response->send();
+            return;
         } else {
             return $this->response('Short URL not found', 404);
         }

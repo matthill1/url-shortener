@@ -26,7 +26,7 @@ class App
                 `last_accessed` timestamp NULL DEFAULT NULL,
                 `hits` int NOT NULL DEFAULT '0',
             PRIMARY KEY (`id`)
-            ) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;"
+            ) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
         );
     }
 
@@ -45,6 +45,8 @@ class App
 
     public function checkTables()
     {
+        $this->migrate();
+
         $tables = $this->db->query('SHOW TABLES')->fetchAll();
 
         if (count($tables) > 0) {
